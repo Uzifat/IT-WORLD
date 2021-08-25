@@ -1,0 +1,127 @@
+//@version=3
+study(title="Uzifat", shorttitle="Uzifat FoMoKill", overlay = true)
+
+EMA1 = input(5, minval=1, title="EMA1")
+EMA2 = input(8, minval=1, title="EMA2"),
+EMA3 = input(13, minval=1, title="EMA3")
+EMA4 = input(21, minval=1, title="EMA4"),
+EMA5 = input(34, minval=1, title="EMA5")
+EMA6 = input(55, minval=1, title="EMA6")
+EMA7 = input(89, minval=1, title="EMA7")
+EMA8 = input(144, minval=1, title="EMA8")
+EMA9 = input(233, minval=1, title="EMA9")
+
+plot(ema(close, EMA1), color=green, linewidth=1)
+plot(ema(close, EMA2), color=white, linewidth=1)
+plot(ema(close, EMA3), color=gray, linewidth=1)
+plot(ema(close, EMA4), color=aqua, linewidth=1)
+plot(ema(close, EMA5), color=blue, linewidth=1)
+plot(ema(close, EMA6), color=red, linewidth=2)
+plot(ema(close, EMA7), color=orange, linewidth=2)
+plot(ema(close, EMA8), color=yellow, linewidth=2)
+plot(ema(close, EMA9), color=purple, linewidth=3)
+
+SMA50 = input(50, minval=1, title="SMA50")
+SMA200 = input(200, minval=1, title="SMA200")
+
+plot(sma(close, SMA50), color=lime, linewidth=2)
+plot(sma(close, SMA200), color=teal, linewidth=3)
+
+leftBars = input(4)
+rightBars = input(2)
+
+swh = pivothigh(leftBars, rightBars)
+swl = pivotlow(leftBars, rightBars)
+
+swh_cond = not na(swh)
+
+hprice = 0.0
+hprice := swh_cond ? swh : hprice[1]
+
+le = false
+le := swh_cond ? true : (le[1] and high > hprice ? false : le[1])
+
+swl_cond = not na(swl)
+
+lprice = 0.0
+lprice := swl_cond ? swl : lprice[1]
+
+
+se = false
+se := swl_cond ? true : (se[1] and low < lprice ? false : se[1])
+
+// Filter out signals if opposite signal is also on
+se_filtered = se and not le
+le_filtered = le and not se
+
+// Filter consecutive entries 
+prev = 0
+prev := se_filtered ? 1 : le_filtered ? -1 : prev[1]
+
+se_final = se_filtered and prev[1] == -1
+le_final = le_filtered and prev[1] == 1
+
+plotshape(se_final, color=green, text = "BUY", style=shape.triangleup,location=location.belowbar)
+plotshape(le_final, color=red, text = "SELL", style=shape.triangledown,location=location.abovebar)
+
+alertcondition(se_final, "BUY-Autoview", "")
+alertcondition(le_final, "SELL-Autoview", "")
+
+sd = input(false, title="Mostrar Pivotes Diarios")
+sw = input(true, title="Mostrar Pivotes Semanales")
+xHigh  = security(tickerid,"D", high[1])
+xLow   = security(tickerid,"D", low[1])
+xClose = security(tickerid,"D", close[1])
+dPP = (xHigh+xLow+xClose) / 3
+dR1 = dPP+(dPP-xLow)
+dS1 = dPP-(xHigh - dPP)
+dR2 = dPP + (xHigh - xLow)
+dS2 = dPP - (xHigh - xLow)
+dR3 = xHigh + 2 * (dPP - xLow) 
+dS3 = xLow - 2 * (xHigh - dPP)
+plot(sd and dPP ? dPP : na, color=orange, title="PP Diario", style = circles, linewidth = 1, transp=0)
+plot(sd and dS1 ? dS1 : na, color=#ff0000, title="S1 Diario", style = circles, linewidth = 1, transp=0)
+plot(sd and dS2 ? dS2 : na, color=#ff002a, title="S2 Diario", style = circles, linewidth = 1, transp=0)
+plot(sd and dS3 ? dS3 : na, color=#ff014a, title="S3 Diario", style = circles, linewidth = 1, transp=0)
+plot(sd and dR1 ? dR1 : na, color=#009600, title="R1 Diario", style = circles, linewidth = 1, transp=0)
+plot(sd and dR2 ? dR2 : na, color=#006F00, title="R2 Diario", style = circles, linewidth = 1, transp=0)
+plot(sd and dR3 ? dR3 : na, color=#004900, title="R3 Diario", style = circles, linewidth = 1, transp=0)
+
+yHigh  = security(tickerid,"W", high[1])
+yLow   = security(tickerid,"W", low[1])
+yClose = security(tickerid,"W", close[1])
+wPP = (yHigh+yLow+yClose) / 3
+wR1 = wPP+(wPP-yLow)
+wS1 = wPP-(yHigh - wPP)
+wR2 = wPP + (yHigh - yLow)
+wS2 = wPP - (yHigh - yLow)
+wR3 = yHigh + 2 * (wPP - yLow) 
+wS3 = yLow - 2 * (yHigh - wPP)
+plot(sw and wPP ? wPP : na, color=orange, title="PP Semanal", style = circles, linewidth = 1, transp=0)
+plot(sw and wS1 ? wS1 : na, color=#ff0000, title="S1 Semanal", style = circles, linewidth = 1, transp=0)
+plot(sw and wS2 ? wS2 : na, color=#ff002a, title="S2 Semanal", style = circles, linewidth = 1, transp=0)
+plot(sw and wS3 ? wS3 : na, color=#ff014a, title="S3 Semanal", style = circles, linewidth = 1, transp=0)
+plot(sw and wR1 ? wR1 : na, color=#009600, title="R1 Semanal", style = circles, linewidth = 1, transp=0)
+plot(sw and wR2 ? wR2 : na, color=#006F00, title="R2 Semanal", style = circles, linewidth = 1, transp=0)
+plot(sw and wR3 ? wR3 : na, color=#004900, title="R3 Semanal", style = circles, linewidth = 1, transp=0)
+
+middleDonchian(Length) =>
+    lower = lowest(Length)
+    upper = highest(Length)
+    avg(upper, lower)
+
+conversionPeriods = input(9, minval=1),
+basePeriods = input(26, minval=1)
+laggingSpan2Periods = input(52, minval=1),
+displacement = input(26, minval=1)
+Tenkan = middleDonchian(conversionPeriods)
+Kijun =  middleDonchian(basePeriods)
+xChikou = close
+SenkouA = middleDonchian(laggingSpan2Periods)
+SenkouB = (Tenkan[basePeriods] + Kijun[basePeriods]) / 2
+plot(Tenkan, color=red, title="Tenkan")
+plot(Kijun, color=blue, title="Kijun")
+plot(xChikou, color= teal , title="Chikou", offset = -displacement)
+A = plot(SenkouA[displacement], color=purple, title="SenkouA")
+B = plot(SenkouB, color=green, title="SenkouB")
+fill(A, B, color=green)
